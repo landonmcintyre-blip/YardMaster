@@ -1,4 +1,4 @@
-const API_URL="PASTE_YARD_APPS_SCRIPT_WEB_APP_URL_HERE";
+const API_URL="https://script.google.com/macros/s/AKfycbxA64sbkXI3bkFhGsjXvSCzIis64XI0M439EcqB00xrCfs4fzLL9jSS08IdHlzpBguBsA/exec";
 const CARTON_TYPES=["Bundle","Skid","Stick","Other"];
 const KEYS={loader:"yardmaster-loader",session:"yardmaster-session",queue:"yardmaster-pending",cache:"yardmaster-cartons"};
 const $=id=>document.getElementById(id);

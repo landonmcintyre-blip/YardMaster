@@ -1,6 +1,12 @@
 const API_URL="https://script.google.com/macros/s/AKfycbxA64sbkXI3bkFhGsjXvSCzIis64XI0M439EcqB00xrCfs4fzLL9jSS08IdHlzpBguBsA/exec";
 const CARTON_TYPES=["Bundle","Skid","Stick","Box","Flat"];
-const KEYS={loader:"yardmaster-loader",session:"yardmaster-session",queue:"yardmaster-pending",cache:"yardmaster-cartons"};
+const KEYS={
+  loader:"yardmaster-loader",
+  session:"yardmaster-session",
+  queue:"yardmaster-pending",
+  cache:"yardmaster-cartons",
+  locations:"yardmaster-custom-locations"
+};
 const $=id=>document.getElementById(id);
 const ui={loginPage:$("login-page"),loginForm:$("login-form"),loaderSelect:$("loader-select"),pin:$("loader-pin"),loginButton:$("login-button"),loginMessage:$("login-message"),loadPage:$("load-status-page"),loadMessage:$("load-status-message"),scannerPage:$("scanner-page"),loaderName:$("loader-name"),location:$("location-select"),sync:$("sync-status"),video:$("camera"),status:$("scanner-status"),start:$("start-button"),flash:$("flashlight-button"),manual:$("manual-button"),cartonCard:$("carton-card"),cartonId:$("carton-id"),knownNote:$("known-carton-note"),types:$("type-buttons"),save:$("save-scan-button"),signOut:$("sign-out-button"),manualDialog:$("manual-dialog"),manualForm:$("manual-form"),manualCarton:$("manual-carton"),manualCancel:$("manual-cancel"),pendingDialog:$("pending-dialog"),pendingMessage:$("pending-message"),pendingRetry:$("pending-retry"),pendingClose:$("pending-close")};
 let session=read(KEYS.session,null),cartons=new Map(),activeCarton="",selectedType="",scannerRunning=false,scanLocked=false,syncing=false,cameraTrack=null,torch=false,cacheTimer=null,expiryTimer=null,lastCode="",lastScanAt=0;
@@ -60,7 +66,80 @@ reader.drawFrameOnCanvas = function (
 };
 
 ui.loginForm.addEventListener("submit",login);document.querySelectorAll("[data-load-answer]").forEach(b=>b.addEventListener("click",()=>recordLoadStatus(b.dataset.loadAnswer)));ui.start.addEventListener("click",startScanner);ui.flash.addEventListener("click",toggleTorch);ui.save.addEventListener("click",saveScan);ui.signOut.addEventListener("click",signOut);ui.manual.addEventListener("click",()=>{ui.manualCarton.value="";ui.manualDialog.showModal();ui.manualCarton.focus()});ui.manualCancel.addEventListener("click",()=>ui.manualDialog.close());ui.manualForm.addEventListener("submit",e=>{e.preventDefault();const id=normalizeCarton(ui.manualCarton.value);if(id){ui.manualDialog.close();acceptDecoded(id)}});ui.pendingClose.addEventListener("click",()=>ui.pendingDialog.close());ui.pendingRetry.addEventListener("click",async()=>{await syncQueue();if(!queue().length)ui.pendingDialog.close();else showPendingBlock()});window.addEventListener("online",syncQueue);document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible"){syncQueue();checkExpiry()}});setInterval(syncQueue,15000);
+loadCustomLocations();
 
+ui.location.addEventListener("change", () => {
+  if (ui.location.value !== "__new__") return;
+
+  const enteredLocation = window.prompt(
+    "Enter the new location:",
+    "Trailer "
+  );
+
+  const newLocation = String(
+    enteredLocation || ""
+  ).trim();
+
+  if (!newLocation) {
+    ui.location.value = "Loader Yard";
+    return;
+  }
+
+  const savedLocations = read(
+    KEYS.locations,
+    []
+  );
+
+  if (
+    !savedLocations.some(
+      location =>
+        location.toLowerCase() ===
+        newLocation.toLowerCase()
+    )
+  ) {
+    savedLocations.push(newLocation);
+    write(KEYS.locations, savedLocations);
+  }
+
+  addLocationOption(newLocation);
+  ui.location.value = newLocation;
+});
+
+function loadCustomLocations() {
+  const savedLocations = read(
+    KEYS.locations,
+    []
+  );
+
+  savedLocations.forEach(addLocationOption);
+}
+
+function addLocationOption(location) {
+  const alreadyExists = [
+    ...ui.location.options
+  ].some(
+    option =>
+      option.value.toLowerCase() ===
+      location.toLowerCase()
+  );
+
+  if (alreadyExists) return;
+
+  const option = new Option(
+    location,
+    location
+  );
+
+  const addNewOption =
+    ui.location.querySelector(
+      'option[value="__new__"]'
+    );
+
+  ui.location.insertBefore(
+    option,
+    addNewOption
+  );
+}
 boot();
 async function boot(){renderTypes();ui.location.value="Loader Yard";if(session?.sessionId&&session?.loaderName){if(Date.now()<new Date(session.expiresAt).getTime()||queue().length){openScanner();if(navigator.onLine)api("sessionStatus",session).then(status=>{if(status?.valid===false&&!queue().length)handleExpiredSession()}).catch(()=>{});return}clearSession()}await loadLoaders()}
 async function loadLoaders(){show("login");ui.loginMessage.textContent="";try{const data=await api("loaders");const loaders=data.loaders||[];ui.loaderSelect.innerHTML='<option value="">Select loader…</option>'+loaders.map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)}</option>`).join("");ui.loaderSelect.value=localStorage.getItem(KEYS.loader)||""}catch(e){ui.loaderSelect.innerHTML='<option value="">Could not load loaders</option>';ui.loginMessage.textContent=e.message}}

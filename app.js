@@ -1,5 +1,5 @@
 const API_URL="https://script.google.com/macros/s/AKfycbxA64sbkXI3bkFhGsjXvSCzIis64XI0M439EcqB00xrCfs4fzLL9jSS08IdHlzpBguBsA/exec";
-const CARTON_TYPES=["Bundle","Skid","Stick","Other"];
+const CARTON_TYPES=["Bundle","Skid","Stick","Box","Flat"];
 const KEYS={loader:"yardmaster-loader",session:"yardmaster-session",queue:"yardmaster-pending",cache:"yardmaster-cartons"};
 const $=id=>document.getElementById(id);
 const ui={loginPage:$("login-page"),loginForm:$("login-form"),loaderSelect:$("loader-select"),pin:$("loader-pin"),loginButton:$("login-button"),loginMessage:$("login-message"),loadPage:$("load-status-page"),loadMessage:$("load-status-message"),scannerPage:$("scanner-page"),loaderName:$("loader-name"),location:$("location-select"),sync:$("sync-status"),video:$("camera"),status:$("scanner-status"),start:$("start-button"),flash:$("flashlight-button"),manual:$("manual-button"),cartonCard:$("carton-card"),cartonId:$("carton-id"),knownNote:$("known-carton-note"),types:$("type-buttons"),save:$("save-scan-button"),signOut:$("sign-out-button"),manualDialog:$("manual-dialog"),manualForm:$("manual-form"),manualCarton:$("manual-carton"),manualCancel:$("manual-cancel"),pendingDialog:$("pending-dialog"),pendingMessage:$("pending-message"),pendingRetry:$("pending-retry"),pendingClose:$("pending-close")};

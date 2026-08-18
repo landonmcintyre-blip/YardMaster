@@ -71,7 +71,19 @@ function show(page){ui.loginPage.hidden=page!=="login";ui.loadPage.hidden=page!=
 
 async function startScanner(){if(scannerRunning)return;ui.status.className="scanner-status";ui.status.textContent="Starting camera…";try{const devices=await reader.listVideoInputDevices();if(!devices.length)throw new Error("No camera was found.");const rear=devices.find(x=>/back|rear|environment/i.test(x.label))||devices[devices.length-1];await reader.decodeFromConstraints({video:{deviceId:{exact:rear.deviceId},facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}},audio:false},ui.video,(result,error)=>{if(result)acceptDecoded(result.getText());if(error&&!(error instanceof ZXing.NotFoundException))console.error(error)});scannerRunning=true;ui.start.hidden=true;ui.status.textContent="Ready — scan carton barcode";cameraTrack=ui.video.srcObject?.getVideoTracks?.()[0]||null;const caps=cameraTrack?.getCapabilities?.()||{};ui.flash.hidden=!caps.torch}catch(e){scannerRunning=false;ui.start.hidden=false;ui.start.textContent="Try Again";ui.status.className="scanner-status error";ui.status.textContent=e.message||"Camera could not start."}}
 function acceptDecoded(raw){if(scanLocked)return;const id=normalizeCarton(raw),now=Date.now();if(!/^C\d+$/.test(id)){if(id&&!(id===lastCode&&now-lastScanAt<1800)){lastCode=id;lastScanAt=now;feedback("Unknown barcode",false)}return}if(id===lastCode&&now-lastScanAt<1800)return;lastCode=id;lastScanAt=now;scanLocked=true;activeCarton=id;const known=cartons.get(id);selectedType=known?.cartonType&&CARTON_TYPES.includes(known.cartonType)?known.cartonType:"";ui.cartonId.textContent=id;ui.knownNote.textContent=known?.cartonType?`Known type: ${known.cartonType}`:"New carton — select a type";ui.cartonCard.hidden=false;renderTypes();ui.save.disabled=!selectedType;feedback(`${id} ready to save`,true);beep(true)}
-function renderTypes(){ui.types.innerHTML=CARTON_TYPES.map(t=>`<button type="button" class="type-button${t===selectedType?" selected":""}" data-type="${t}">${t}</button>`).join("");ui.types.querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{selectedType=b.dataset.type;renderTypes();ui.save.disabled=false}))}
+function renderTypes() {
+  ui.types.innerHTML = CARTON_TYPES.map(
+    type =>
+      `<button type="button" class="type-button" data-type="${type}">${type}</button>`
+  ).join("");
+
+  ui.types.querySelectorAll("button").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedType = button.dataset.type;
+      saveScan();
+    });
+  });
+}
 function saveScan(){if(!activeCarton||!selectedType)return;const scan={clientScanId:crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`,cartonId:activeCarton,cartonType:selectedType,location:ui.location.value,scannedAt:new Date().toISOString()};const q=queue();q.push(scan);write(KEYS.queue,q);cartons.set(activeCarton,{...(cartons.get(activeCarton)||{}),cartonId:activeCarton,cartonType:selectedType,location:ui.location.value});saveCache();const saved=activeCarton;activeCarton="";selectedType="";scanLocked=false;ui.cartonCard.hidden=true;feedback(`Saved ${saved} — scan next carton`,true);beep(true);renderSync();syncQueue()}
 function normalizeCarton(value){let v=String(value||"").trim().toUpperCase().replace(/\s+/g,"");if(v&&!v.startsWith("C"))v="C"+v;return v}
 

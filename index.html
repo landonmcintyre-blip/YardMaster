@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#172033">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>YardMaster</title>
+  <link rel="stylesheet" href="style.css?v=1">
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section id="login-page" class="page login-page">
+      <div class="card login-card">
+        <div class="brand">YARDMASTER</div>
+        <h1>Loader Sign In</h1>
+        <form id="login-form" novalidate>
+          <label for="loader-select">Loader</label>
+          <select id="loader-select" required><option value="">Loading loaders…</option></select>
+          <label for="loader-pin">PIN</label>
+          <input id="loader-pin" type="password" inputmode="numeric" autocomplete="off" pattern="[0-9]*" maxlength="12" required>
+          <div id="login-message" class="message error" role="alert"></div>
+          <button id="login-button" class="primary" type="submit">Sign In</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="load-status-page" class="page centered" hidden>
+      <div class="card question-card">
+        <div class="brand">YARDMASTER</div>
+        <h1>Have all trucks been loaded?</h1>
+        <button class="primary" type="button" data-load-answer="Yes">Yes</button>
+        <button class="secondary" type="button" data-load-answer="No">No</button>
+        <div id="load-status-message" class="message error" role="alert"></div>
+      </div>
+    </section>
+
+    <section id="scanner-page" class="page scanner-page" hidden>
+      <header class="app-header">
+        <div><div class="brand">YARDMASTER</div><div id="loader-name" class="loader-name"></div></div>
+        <button id="sign-out-button" class="text-button" type="button">Sign Out</button>
+      </header>
+
+      <div class="controls-row">
+        <label>Location<select id="location-select"><option>Loader Yard</option><option>Seconds Yard</option></select></label>
+        <span id="sync-status" class="sync-status">Checking…</span>
+      </div>
+
+      <section class="scanner-window">
+        <video id="camera" playsinline muted></video>
+        <div class="scanner-guide" aria-hidden="true"></div>
+        <button id="flashlight-button" class="camera-button" type="button" hidden aria-label="Toggle flashlight">🔦</button>
+        <button id="manual-button" class="camera-button manual-button" type="button" aria-label="Enter carton manually">⌨</button>
+      </section>
+
+      <div id="scanner-status" class="scanner-status">Starting scanner…</div>
+      <button id="start-button" class="primary" type="button">Start Scanner</button>
+
+      <section id="carton-card" class="card carton-card" hidden>
+        <div class="eyebrow">Scanned carton</div>
+        <div id="carton-id" class="carton-id"></div>
+        <div id="known-carton-note" class="known-note"></div>
+        <fieldset>
+          <legend>Carton type</legend>
+          <div id="type-buttons" class="type-grid"></div>
+        </fieldset>
+        <button id="save-scan-button" class="primary" type="button">Save &amp; Scan Next</button>
+      </section>
+    </section>
+
+    <dialog id="manual-dialog">
+      <form id="manual-form" method="dialog">
+        <h2>Enter Carton</h2>
+        <label for="manual-carton">Carton number</label>
+        <div class="carton-input"><span>C</span><input id="manual-carton" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required></div>
+        <div class="dialog-actions"><button id="manual-cancel" class="secondary" type="button">Cancel</button><button class="primary" type="submit">Continue</button></div>
+      </form>
+    </dialog>
+
+    <dialog id="pending-dialog">
+      <div class="dialog-body">
+        <h2>Scans Still Pending</h2>
+        <p id="pending-message"></p>
+        <div class="dialog-actions"><button id="pending-close" class="secondary" type="button">Close</button><button id="pending-retry" class="primary" type="button">Try Again</button></div>
+      </div>
+    </dialog>
+  </main>
+  <script src="app.js?v=1"></script>
+  <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js").catch(console.error));}</script>
+</body>
+</html>

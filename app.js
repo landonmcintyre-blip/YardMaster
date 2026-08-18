@@ -75,9 +75,189 @@ function renderTypes(){ui.types.innerHTML=CARTON_TYPES.map(t=>`<button type="but
 function saveScan(){if(!activeCarton||!selectedType)return;const scan={clientScanId:crypto.randomUUID?.()||`${Date.now()}-${Math.random().toString(16).slice(2)}`,cartonId:activeCarton,cartonType:selectedType,location:ui.location.value,scannedAt:new Date().toISOString()};const q=queue();q.push(scan);write(KEYS.queue,q);cartons.set(activeCarton,{...(cartons.get(activeCarton)||{}),cartonId:activeCarton,cartonType:selectedType,location:ui.location.value});saveCache();const saved=activeCarton;activeCarton="";selectedType="";scanLocked=false;ui.cartonCard.hidden=true;feedback(`Saved ${saved} — scan next carton`,true);beep(true);renderSync();syncQueue()}
 function normalizeCarton(value){let v=String(value||"").trim().toUpperCase().replace(/\s+/g,"");if(v&&!v.startsWith("C"))v="C"+v;return v}
 
-async function syncQueue(){if(syncing||!navigator.onLine||!session?.sessionId)return;const submitted=queue();if(!submitted.length){renderSync();return}syncing=true;renderSync();try{const data=await api("sync",{...session,scans:submitted});if(data.valid===false){await handleExpiredSession();throw new Error(data.reason||"Session expired.")}if(!data.success)throw new Error(data.reason||data.error||"Sync rejected.");const accepted=new Set((data.results||[]).filter(x=>x.success).map(x=>x.clientScanId));if(!accepted.size&&data.success)submitted.forEach(x=>accepted.add(x.clientScanId));write(KEYS.queue,queue().filter(x=>!accepted.has(x.clientScanId)))}catch(e){console.warn("YardMaster sync paused:",e)}finally{syncing=false;renderSync()}}
-function queue(){const q=read(KEYS.queue,[]);return Array.isArray(q)?q:[]}
-function renderSync(){const n=queue().length;ui.sync.className="sync-status "+(n?"warn":"ok");ui.sync.textContent=syncing?`${n} syncing…`:n?`${n} pending`:"✓ Synced"}
+async function syncQueue() {
+  if (
+    syncing ||
+    !navigator.onLine ||
+    !session?.sessionId
+  ) {
+    return;
+  }
+
+  const submitted = queue();
+
+  if (!submitted.length) {
+    renderSync();
+    return;
+  }
+
+  syncing = true;
+  renderSync();
+
+  try {
+    const data = await api("sync", {
+      ...session,
+      scans: submitted
+    });
+
+    if (data.valid === false) {
+      await handleExpiredSession();
+      throw new Error(
+        data.reason || "Session expired."
+      );
+    }
+
+    if (!data.success) {
+      throw new Error(
+        data.reason ||
+        data.error ||
+        "Sync rejected."
+      );
+    }
+
+    const results = Array.isArray(data.results)
+      ? data.results
+      : [];
+
+    const accepted = new Set(
+      results
+        .filter(result => result.success)
+        .map(result => result.clientScanId)
+    );
+
+    write(
+      KEYS.queue,
+      queue().filter(
+        scan => !accepted.has(scan.clientScanId)
+      )
+    );
+
+    const failed = results.filter(
+      result => !result.success
+    );
+
+    if (failed.length) {
+      throw new Error(
+        failed[0].error || "Scan rejected."
+      );
+    }
+  } catch (error) {
+    console.warn(
+      "YardMaster sync paused:",
+      error
+    );
+
+    ui.status.textContent =
+      `SYNC ERROR: ${error.message || "Unknown error"}`;
+
+    ui.status.className =
+      "scanner-status error";
+  } finally {
+    syncing = false;
+    renderSync();
+  }
+}function queue(){const q=read(KEYS.queue,[]);return Array.isArray(q)?q:[]}
+function renderSync() {
+  const pendingCount = queue().length;
+
+  ui.sync.className =
+    "sync-status " +
+    (pendingCount ? "warn" : "ok");
+
+  if (syncing) {
+    ui.sync.textContent =
+      `${pendingCount} syncing…`;
+    return;
+  }
+
+  if (pendingCount) {
+    ui.sync.textContent =
+      `${pendingCount} pending — retrying`;
+    return;
+  }
+
+  ui.sync.textContent = "✓ Synced";
+} {
+  const pendingCount = queue().length;
+
+  ui.sync.className =
+    "sync-status " +
+    (pendingCount ? "warn" : "ok");
+
+  if (syncing) {
+    ui.sync.textContent =
+      `${pendingCount} syncing…`;
+    return;
+  }
+
+  if (pendingCount) {
+    ui.sync.textContent =
+      `${pendingCount} pending — retrying`;
+    return;
+  }
+
+  ui.sync.textContent = "✓ Synced";
+} {
+  const pendingCount = queue().length;
+
+  ui.sync.className =
+    "sync-status " +
+    (pendingCount ? "warn" : "ok");
+
+  if (syncing) {
+    ui.sync.textContent =
+      `${pendingCount} syncing…`;
+    return;
+  }
+
+  if (pendingCount) {
+    ui.sync.textContent =
+      `${pendingCount} pending — retrying`;
+    return;
+  }
+
+  ui.sync.textContent = "✓ Synced";
+} {
+  const pendingCount = queue().length;
+
+  ui.sync.className =
+    "sync-status " +
+    (pendingCount ? "warn" : "ok");
+
+  if (syncing) {
+    ui.sync.textContent =
+      `${pendingCount} syncing…`;
+    return;
+  }
+
+  if (pendingCount) {
+    ui.sync.textContent =
+      `${pendingCount} pending — retrying`;
+    return;
+  }
+
+  ui.sync.textContent = "✓ Synced";
+} {
+  const pendingCount = queue().length;
+
+  ui.sync.className =
+    "sync-status " +
+    (pendingCount ? "warn" : "ok");
+
+  if (syncing) {
+    ui.sync.textContent =
+      `${pendingCount} syncing…`;
+    return;
+  }
+
+  if (pendingCount) {
+    ui.sync.textContent =
+      `${pendingCount} pending — retrying`;
+    return;
+  }
+
+  ui.sync.textContent = "✓ Synced";
+}{const n=queue().length;ui.sync.className="sync-status "+(n?"warn":"ok");ui.sync.textContent=syncing?`${n} syncing…`:n?`${n} pending`:"✓ Synced"}
 async function loadCache(){const local=read(KEYS.cache,{cartons:[]});applyCache(local.cartons||[]);if(!navigator.onLine){renderSync();return}await refreshCache();clearInterval(cacheTimer);cacheTimer=setInterval(refreshCache,60000)}
 async function refreshCache(){try{const data=await api("cartonCache",session);if(data.valid===false)return handleExpiredSession();applyCache(data.cartons||[]);write(KEYS.cache,{savedAt:new Date().toISOString(),cartons:data.cartons||[]})}catch(e){console.warn("Carton cache refresh paused:",e)}}
 function applyCache(items){cartons=new Map(items.map(x=>[normalizeCarton(x.cartonId),x]))}function saveCache(){write(KEYS.cache,{savedAt:new Date().toISOString(),cartons:[...cartons.values()]})}
